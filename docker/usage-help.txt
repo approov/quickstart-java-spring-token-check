@@ -1,0 +1,45 @@
+DOCKER STACK CLI WRAPPER
+
+This bash script is a wrapper around docker for easier use of the docker stack
+in this project.
+
+Signature:
+  ./stack [options] <command> <args>
+
+
+Usage:
+  ./stack
+  ./stack [-d, --detach] [-h, --help] [-p, --port] [-u, --user] <command> <args>
+
+
+Options:
+  -d, --detach    Runs the docker container detached from the terminal.
+                    $ ./stack --detach up
+
+  -h, --help      Shows this help.
+                    $ ./stack --help
+
+  -p, --port      The host port to access the docker container.
+                    $ ./stack --port 8000 up
+
+  -u, --user      Run the docker container under the given user name or uid.
+                    $ ./stack --user root shell
+
+Commands/Args:
+  build           Builds the docker image for this stack.
+                    $ ./stack build
+
+  down            Stops and removes the docker container.
+                    $ ./stack down
+
+  up              Starts the docker container with the Java server running.
+                  Defaults to on port 5000.
+                    $ ./stack up
+                    $ ./stack --detach up
+                    $ ./stack --port 8000 up
+                    $ ./stack --detach --port 8000 up
+
+  shell <name>    Starts a shell in the docker container:
+                    $ ./stack shell
+                    $ ./stack shell bash
+                    $ ./stack --user 0 shell
