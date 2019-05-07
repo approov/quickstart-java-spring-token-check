@@ -24,7 +24,7 @@ public class ApproovAuthenticationProvider implements AuthenticationProvider {
      * @param approovConfig Extracted from the .env file in the root of the package.
      */
     public ApproovAuthenticationProvider(ApproovConfig approovConfig) {
-        this.approovSecret = Base64.decodeBase64(approovConfig.getBase64Secret());
+        this.approovSecret = Base64.decodeBase64(approovConfig.getApproovBase64Secret());
     }
 
     @Override

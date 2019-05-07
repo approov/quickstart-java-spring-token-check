@@ -9,9 +9,9 @@ final public class ApproovConfig {
 
     private String approovHeaderName = "Approov-Token";
 
-    private final String approovClaimHeaderName;
+    private String approovBase64Secret;
 
-    private String base64Secret = System.getenv("APPROOV_BASE64_SECRET");
+    private final String approovClaimHeaderName;
 
     private boolean toAbortRequestOnInvalidToken;
 
@@ -21,6 +21,7 @@ final public class ApproovConfig {
      * Constructs the Approov Config singleton with values retrieved from the .env file in the root of the project.
      */
     private ApproovConfig() {
+        this.approovBase64Secret = retrieveApproovBase64Secret();
         this.approovClaimHeaderName = retrieveStringValueFromEnv("APPROOV_CLAIM_HEADER_NAME", "Authorization");
         this.toAbortRequestOnInvalidToken = retrieveBooleanValueFromEnv("APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN", true);
         this.toAbortRequestOnInvalidCustomPayloadClaim = retrieveBooleanValueFromEnv("APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM", true);
@@ -38,8 +39,8 @@ final public class ApproovConfig {
         return approovClaimHeaderName;
     }
 
-    String getBase64Secret() {
-        return base64Secret;
+    String getApproovBase64Secret() {
+        return approovBase64Secret;
     }
 
     boolean isToAbortRequestOnInvalidToken() {
@@ -48,6 +49,16 @@ final public class ApproovConfig {
 
     boolean isToAbortRequestOnInvalidCustomPayloadClaim() {
         return toAbortRequestOnInvalidCustomPayloadClaim;
+    }
+
+    private String retrieveApproovBase64Secret() {
+        approovBase64Secret = System.getenv("APPROOV_BASE64_SECRET");
+
+        if (approovBase64Secret == null) {
+            throw new ApproovAuthenticationException("Cannot retrieve APPROOV_BASE64_SECRET from the environment.");
+        }
+
+        return approovBase64Secret;
     }
 
     private String retrieveStringValueFromEnv(String key, String defaultValue) {

@@ -232,11 +232,15 @@ Feel free to try all the options...
 To start the server we want to issue the command:
 
 ```bash
-./gradlew bootRun
+source .env && ./gradlew bootRun
 ```
 
-After the Java server is up and running it will be available at http://localhost:5000.
+> **NOTE**:
+>
+> If you decide to run the Java server from your IDE, then you need to set all
+> the environments variables in the `.env` file in your IDE.
 
+After the Java server is up and running it will be available at http://localhost:5000.
 
 ### Endpoint Not Protected by Approov
 
