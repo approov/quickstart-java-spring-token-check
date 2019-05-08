@@ -412,7 +412,6 @@ That will give us this new CORS configuration:
 @Bean
 CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(Arrays.asList("http://localhost:5000"));
     configuration.setAllowedMethods(Arrays.asList("GET"));
     configuration.addAllowedHeader("Authorization");
     configuration.addAllowedHeader("Approov-Token");
@@ -585,7 +584,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5000"));
         configuration.setAllowedMethods(Arrays.asList("GET"));
         configuration.addAllowedHeader("Authorization");
         configuration.addAllowedHeader("Approov-Token");
@@ -702,7 +700,6 @@ If we compare the initial implementation with the final result for the class
  import org.springframework.web.cors.CorsConfiguration;
 @@ -25,6 +26,8 @@
          CorsConfiguration configuration = new CorsConfiguration();
-         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5000"));
          configuration.setAllowedMethods(Arrays.asList("GET"));
 +        configuration.addAllowedHeader("Authorization");
 +        configuration.addAllowedHeader("Approov-Token");
@@ -835,10 +832,7 @@ Please bear in mind that https on its own is not enough, certificate pinning
 must be also used to pin the connection between the mobile app and the API
 server in order to prevent [Man in the Middle Attacks](https://approov.io/docs/mitm-detection.html).
 
-We do not use https and certificate pinning in this Approov integration example
-because we want to be able to run the
-[Approov Shapes Demo Server](./docs/approov-shapes-demo-server.md) in localhost.
+We do not use certificate pinning in this Approov integration example
+because we want to be able to demonstrate, via Postman how, the API works.
 
-However in production will be mandatory to implement at least
-[static pinning](https://approov.io/docs/mitm-detection.html#id1)
-or [dynamic pinning](https://approov.io/docs/mitm-detection.html#dynamic-pinning).
+However in production will be mandatory to implement [certificate pinning](https://approov.io/docs/mitm-detection.html#id1).

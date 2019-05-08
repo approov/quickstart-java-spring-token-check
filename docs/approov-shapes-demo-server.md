@@ -47,7 +47,6 @@ Show the usage help with:
 
 ```bash
 $ ./stack --help
-
 DOCKER STACK CLI WRAPPER
 
 This bash script is a wrapper around docker for easier use of the docker stack
@@ -59,7 +58,7 @@ Signature:
 
 Usage:
   ./stack
-  ./stack [-d, --detach] [-h, --help] [-p, --port] [-u, --user] <command> <args>
+  ./stack [-d, --detach] [-h, --help] [--http] [--https] [-u, --user] <command> <args>
 
 
 Options:
@@ -69,8 +68,13 @@ Options:
   -h, --help      Shows this help.
                     $ ./stack --help
 
-  -p, --port      The host port to access the docker container.
-                    $ ./stack --port 8000 up
+  --http          The HTTP port map host:container.
+                  Defaults to use port map 5000:5000.
+                    $ ./stack --http 8000:5000 up
+
+  --https         The HTTPS port map host:container.
+                  Defaults to use port map 5443:5443.
+                    $ ./stack --https 8443:5443 up
 
   -u, --user      Run the docker container under the given user name or uid.
                     $ ./stack --user root shell
@@ -83,16 +87,16 @@ Commands/Args:
                     $ ./stack down
 
   up              Starts the docker container with the Java server running.
-                  Defaults to on port 5000.
                     $ ./stack up
                     $ ./stack --detach up
-                    $ ./stack --port 8000 up
-                    $ ./stack --detach --port 8000 up
+                    $ ./stack --detach --https 8443:5443 up
+                    $ ./stack --http 8000:5000 --https 8443:5443 up
 
   shell <name>    Starts a shell in the docker container:
                     $ ./stack shell
                     $ ./stack shell bash
-                    $ ./stack --user 0 shell
+                    $ ./stack --http 4000:5000 shell
+                    $ ./stack --user root shell
 ```
 
 #### Building the docker image:
@@ -228,6 +232,15 @@ Feel free to try all the options...
 
 
 ### Starting the Java Server
+
+We do not use https and certificate pinning in this demo, because we use Postman
+to show how the API works, and Postman does not support self-signed certificates.
+
+This server has `https` enabled with a self-signed certificate at
+`src/main/java/resources/keystore/ApproovTLS.p12`, thus feel free to use it in
+another tool that supports self-signed certicates, and then just hit the same
+API endpoints hover `https`, or change the setting `HTTP_REDIRECT` to `true` in
+the `.env` file.
 
 To start the server we want to issue the command:
 
