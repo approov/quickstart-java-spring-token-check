@@ -13,6 +13,7 @@ public class ApiEndpoints {
 
     public List getEndpoints() {
         List<String> list = new ArrayList<String>();
+        list.add("/hello");
         list.add("/forms");
         list.add("/shapes");
 

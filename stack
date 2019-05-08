@@ -83,19 +83,21 @@ Start_Or_Attach_To_App_Container()
     # INPUT
     ############################################################################
 
-    local container_name="${1? Missing container name!!!}"
+    local container_name="${1? Missing container name !!!}"
 
-    local container_user="${2? Missing container user!!!}"
+    local container_user="${2? Missing container user !!!}"
 
-    local host_http_port="${3? Missing the host http port for the container!!!}"
+    local http_port_map="${3? Missing the http port host:container !!!}"
 
-    local background_mode="${4? Missing backround mode to run the container!!!}"
+    local https_port_map="${4? Missing the https port map host:container !!!}"
 
-    local docker_image="${5? Missing docker image name!!!}"
+    local background_mode="${5? Missing backround mode to run the container !!!}"
 
-    local run_command="${6? Missing command to run in the docker container!!!}"
+    local docker_image="${6? Missing docker image name !!!}"
 
-    shift 6
+    local run_command="${7? Missing command to run in the docker container !!!}"
+
+    shift 7
 
 
     ############################################################################
@@ -121,7 +123,8 @@ Start_Or_Attach_To_App_Container()
         --user "${container_user}" \
         --env-file .env \
         --name "${container_name}" \
-        --publish "127.0.0.1:${host_http_port}:5000" \
+        --publish "127.0.0.1:${http_port_map}" \
+        --publish "127.0.0.1:${https_port_map}" \
         --volume "$PWD:/home/java/workspace" \
         --volume "${PWD}/.local/.gradle:/home/java/.gradle" \
         approov/java-spring-demo:11-slim ${run_command}
@@ -144,7 +147,8 @@ Main()
 
     local container_user="$(id -u)"
 
-    local host_http_port=5000
+    local http_port_map=5000:5000
+    local https_port_map=5443:5443
 
     local background_mode="-it"
 
@@ -156,13 +160,18 @@ Main()
               shift 1
             ;;
 
-            -h | --help)
+            -h | --help )
                 Show_Help
                 exit 0
             ;;
 
-            -p | --port)
-                host_http_port="${2? Missing HTTP port to access the container in localhost}"
+            --http )
+                http_port_map="${2? Missing HTTP port map host:container}"
+                shift 2
+            ;;
+
+            --https )
+                https_port_map="${2? Missing HTTPS port host:container}"
                 shift 2
             ;;
 
@@ -185,7 +194,8 @@ Main()
                 Start_Or_Attach_To_App_Container \
                     "${CONTAINER_NAME}" \
                     "${container_user}" \
-                    "${host_http_port}" \
+                    "${http_port_map}" \
+                    "${https_port_map}" \
                     "${background_mode}" \
                     "${DOCKER_IMAGE}" \
                     "${2:-zsh}"
@@ -197,7 +207,8 @@ Main()
                 Start_Or_Attach_To_App_Container \
                     "${CONTAINER_NAME}" \
                     "${container_user}" \
-                    "${host_http_port}" \
+                    "${http_port_map}" \
+                    "${https_port_map}" \
                     "${background_mode}" \
                     "${DOCKER_IMAGE}" \
                     "./gradlew bootRun"

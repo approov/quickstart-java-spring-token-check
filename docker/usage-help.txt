@@ -9,7 +9,7 @@ Signature:
 
 Usage:
   ./stack
-  ./stack [-d, --detach] [-h, --help] [-p, --port] [-u, --user] <command> <args>
+  ./stack [-d, --detach] [-h, --help] [--http] [--https] [-u, --user] <command> <args>
 
 
 Options:
@@ -19,8 +19,13 @@ Options:
   -h, --help      Shows this help.
                     $ ./stack --help
 
-  -p, --port      The host port to access the docker container.
-                    $ ./stack --port 8000 up
+  --http          The HTTP port map host:container.
+                  Defaults to use port map 5000:5000.
+                    $ ./stack --http 8000:5000 up
+
+  --https         The HTTPS port map host:container.
+                  Defaults to use port map 5443:5443.
+                    $ ./stack --https 8443:5443 up
 
   -u, --user      Run the docker container under the given user name or uid.
                     $ ./stack --user root shell
@@ -33,13 +38,13 @@ Commands/Args:
                     $ ./stack down
 
   up              Starts the docker container with the Java server running.
-                  Defaults to on port 5000.
                     $ ./stack up
                     $ ./stack --detach up
-                    $ ./stack --port 8000 up
-                    $ ./stack --detach --port 8000 up
+                    $ ./stack --detach --https 8443:5443 up
+                    $ ./stack --http 8000:5000 --https 8443:5443 up
 
   shell <name>    Starts a shell in the docker container:
                     $ ./stack shell
                     $ ./stack shell bash
-                    $ ./stack --user 0 shell
+                    $ ./stack --http 4000:5000 shell
+                    $ ./stack --user root shell
