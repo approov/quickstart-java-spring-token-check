@@ -16,7 +16,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
  */
 public class ApproovSecurityContextRepository implements SecurityContextRepository {
 
-    private final boolean checkApproovHeaderClaim;
+    private final boolean checkTokenBinding;
 
     private String approovToken = null;
 
@@ -24,20 +24,20 @@ public class ApproovSecurityContextRepository implements SecurityContextReposito
 
     /**
      * Constructs with an instance of the Approov configuration, and with a boolean flag to indicate if is to check the
-     * custom payload claim in the Approov token.
+     * token binding in the Approov token.
      *
-     * @param approovConfig           Extracted from the .env file in the root of the project.
-     * @param checkApproovHeaderClaim When to check or not the custom payload claim in the Approov token.
+     * @param approovConfig     Extracted from the .env file in the root of the project.
+     * @param checkTokenBinding When to check or not the token binding in the Approov token.
      */
-    public ApproovSecurityContextRepository(ApproovConfig approovConfig, boolean checkApproovHeaderClaim) {
+    public ApproovSecurityContextRepository(ApproovConfig approovConfig, boolean checkTokenBinding) {
         this.approovConfig = approovConfig;
-        this.checkApproovHeaderClaim = checkApproovHeaderClaim;
+        this.checkTokenBinding = checkTokenBinding;
     }
 
     @Override
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
 
-        String approovHeaderClaim = null;
+        String tokenBindingHeader = null;
 
         HttpServletRequest request = requestResponseHolder.getRequest();
 
@@ -55,42 +55,31 @@ public class ApproovSecurityContextRepository implements SecurityContextReposito
             return context;
         }
 
-        if (checkApproovHeaderClaim) {
-            approovHeaderClaim = getApproovHeaderClaimFrom(request);
+        if (checkTokenBinding) {
+            tokenBindingHeader = getTokenBindingHeader(request);
         }
 
-        Authentication approovAuthentication = new ApproovAuthentication(approovConfig, approovToken, checkApproovHeaderClaim, approovHeaderClaim);
+        Authentication approovAuthentication = new ApproovAuthentication(approovConfig, approovToken, checkTokenBinding, tokenBindingHeader);
         context.setAuthentication(approovAuthentication);
 
         return context;
     }
 
-    private String getApproovHeaderClaimFrom(HttpServletRequest request) {
+    private String getTokenBindingHeader(HttpServletRequest request) {
 
-        final String headerName = approovConfig.getApproovClaimHeaderName();
+        final String headerName = approovConfig.getApproovTokenBindingHeaderName();
 
         if (headerName == null) {
             return null;
         }
 
-        final String approovHeaderClaim = request.getHeader(headerName);
+        final String tokenBindingHeader = request.getHeader(headerName);
 
-        if (approovHeaderClaim == null) {
+        if (tokenBindingHeader == null) {
             return null;
         }
 
-        if (approovHeaderClaim.toLowerCase().startsWith("bearer")) {
-
-            String[] parts = approovHeaderClaim.split(" ");
-
-            if (parts.length < 2) {
-                return null;
-            }
-
-            return parts[1].trim();
-        }
-
-        return approovHeaderClaim.trim();
+        return tokenBindingHeader.trim();
     }
 
     @Override

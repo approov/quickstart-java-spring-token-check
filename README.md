@@ -118,7 +118,7 @@ Approov integration.
 
 ## THE POSTMAN COLLECTION
 
-Import this [Postman collection](https://gitlab.com/snippets/1852520/raw) that
+Import this [Postman collection](https://gitlab.com/snippets/1879670/raw) that
 contains all the API endpoints for the Approov Shapes Demo Server and we
 strongly recommend you to follow
 [this demo walk-through](./docs/approov-shapes-demo-server.md) after finishing
@@ -217,14 +217,14 @@ starting point.
 The `.env` file must contain this five variables:
 
 ```env
-APPROOV_CLAIM_HEADER_NAME=Authorization
+APPROOV_TOKEN_BINDING_HEADER_NAME=Authorization
 
 # Feel free to play with different secrets. For development only you can create them with:
 # $ openssl rand -base64 64 | tr -d '\n'; echo
 APPROOV_BASE64_SECRET=h+CX0tOzdAAR9l15bWAqvq7w9olk66daIH+Xk+IAHhVVHszjDzeGobzNnqyRze3lw/WVyWrc2gZfh3XXfBOmww==
 
 APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN=true
-APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM=true
+APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING=true
 APPROOV_LOGGING_ENABLED=true
 ```
 

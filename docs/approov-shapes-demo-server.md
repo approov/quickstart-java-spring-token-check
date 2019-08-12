@@ -496,7 +496,7 @@ more about them [here](./../README.md#approov-validation-process).
 
 The requests where the custom payload claim is checked will be rejected on
 failure but only if the environment variable
-`APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` is set to `true`. To
+`APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING` is set to `true`. To
 bear in mind that before this check is done the request have already been
 through the same flow we have described for the `/shapes` endpoint.
 
@@ -504,7 +504,7 @@ through the same flow we have described for the `/shapes` endpoint.
 #### /forms - Invalid Custom Payload Claim in the Approov token
 
 Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN`
-and `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` set to `true`.
+and `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -542,7 +542,7 @@ invalid custom payload contained in the Approov token.
 **Let's see the same request with Approov disabled**
 
 Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN`
-and `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` set to `false`.
+and `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING` set to `false`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -571,7 +571,7 @@ is is because Approov is now disabled.
 #### /forms - Valid Custom Payload Claim in the Approov token
 
 Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN`
-and `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` set to `true`.
+and `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 

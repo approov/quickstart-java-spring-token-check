@@ -61,9 +61,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .exceptionHandling()
                     .authenticationEntryPoint(new ApproovAuthenticationEntryPoint())
                 .and()
-                    .antMatcher("/shapes")
+                    .antMatcher("/v2/shapes")
                         .authorizeRequests()
-                        .antMatchers(HttpMethod.GET, "/shapes").authenticated();
+                        .antMatchers(HttpMethod.GET, "/v2/shapes").authenticated();
         }
     }
 
@@ -91,9 +91,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .exceptionHandling()
                     .authenticationEntryPoint(new ApproovAuthenticationEntryPoint())
                 .and()
-                    .antMatcher("/forms")
+                    .antMatcher("/v2/forms")
                         .authorizeRequests()
-                        .antMatchers(HttpMethod.GET, "/forms").authenticated();
+                        .antMatchers(HttpMethod.GET, "/v2/forms").authenticated();
         }
     }
 

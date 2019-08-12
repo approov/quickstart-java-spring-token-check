@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
@@ -18,7 +19,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
  *
  * @see com.criticalblue.approov.jwt.WebSecurityConfig
  * @see ApproovAuthentication
- * @see ApproovPayloadAuthentication
+ * @see ApproovTokenBindingAuthentication
  */
 public class ApproovAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
@@ -27,6 +28,12 @@ public class ApproovAuthenticationEntryPoint implements AuthenticationEntryPoint
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         logger.debug("Rejected a request in an endpoint protected by an Approov Token.");
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+
+        if (authException instanceof ApproovException) {
+            response.sendError(((ApproovException) authException).getHttpStatusCode());
+            return;
+        }
+
+        response.sendError(HttpStatus.BAD_REQUEST.value());
     }
 }
