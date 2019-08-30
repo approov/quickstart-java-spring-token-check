@@ -45,9 +45,7 @@ public class ApproovSecurityContextRepository implements SecurityContextReposito
 
         approovToken = request.getHeader(approovConfig.getApproovHeaderName());
 
-        // When no Approov token is provided we must be in an endpoint not protected by Approov, otherwise the Approov
-        // token is missing in the header of the request.
-        if (approovToken == null) {
+        if (approovToken == null && approovConfig.isToAbortRequestOnInvalidToken()) {
 
             // returning an empty security context in an endpoint protected by Approov, will cause Spring to later throw
             // this exception:

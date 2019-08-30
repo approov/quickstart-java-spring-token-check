@@ -27,13 +27,17 @@ public class ApproovAuthenticationEntryPoint implements AuthenticationEntryPoint
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        logger.debug("Rejected a request in an endpoint protected by an Approov Token.");
+        int httpStatusCode = HttpStatus.BAD_REQUEST.value();
 
         if (authException instanceof ApproovException) {
-            response.sendError(((ApproovException) authException).getHttpStatusCode());
-            return;
+            httpStatusCode = ((ApproovException) authException).getHttpStatusCode();
         }
 
-        response.sendError(HttpStatus.BAD_REQUEST.value());
+        final String httpStatusMessage = String.valueOf(HttpStatus.valueOf(httpStatusCode));
+        final String exceptionType = String.valueOf(authException.getClass());
+        final String exceptionMessage = authException.getMessage();
+
+        logger.info(httpStatusMessage + " | " + exceptionType + " | " + exceptionMessage);
+        response.sendError(httpStatusCode);
     }
 }
