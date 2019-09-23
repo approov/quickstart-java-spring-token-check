@@ -147,8 +147,8 @@ Main()
 
     local container_user="$(id -u)"
 
-    local http_port_map=5000:5000
-    local https_port_map=5443:5443
+    local http_port_map=8002:8002
+    local https_port_map=8003:8003
 
     local background_mode="-it"
 

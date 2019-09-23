@@ -12,9 +12,9 @@ import org.springframework.security.core.Authentication;
  */
 public interface ApproovJwtAuthentication extends Authentication {
 
-    boolean isValidApproovHeaderClaim();
+    boolean isValidTokenBinding();
 
     Claims getApproovTokenPayloadClaims();
 
-    void checkWith(byte[] secret) throws JwtException;
+    void checkWith(byte[] secret) throws JwtException, ApproovAuthenticationException;
 }

@@ -1,5 +1,7 @@
 package com.criticalblue.approov.jwt.authentication;
 
+import org.springframework.http.HttpStatus;
+
 /**
  * The Approov configuration that is built from the .env file in the root of the package.
  */
@@ -11,20 +13,20 @@ final public class ApproovConfig {
 
     private String approovBase64Secret;
 
-    private final String approovClaimHeaderName;
+    private final String approovTokenBindingHeaderName;
 
     private boolean toAbortRequestOnInvalidToken;
 
-    private boolean toAbortRequestOnInvalidCustomPayloadClaim;
+    private boolean toAbortRequestOnInvalidTokenBinding;
 
     /**
      * Constructs the Approov Config singleton with values retrieved from the .env file in the root of the project.
      */
     private ApproovConfig() {
         this.approovBase64Secret = retrieveApproovBase64Secret();
-        this.approovClaimHeaderName = retrieveStringValueFromEnv("APPROOV_CLAIM_HEADER_NAME", "Authorization");
+        this.approovTokenBindingHeaderName = retrieveStringValueFromEnv("APPROOV_TOKEN_BINDING_HEADER_NAME", "Authorization");
         this.toAbortRequestOnInvalidToken = retrieveBooleanValueFromEnv("APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN", true);
-        this.toAbortRequestOnInvalidCustomPayloadClaim = retrieveBooleanValueFromEnv("APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM", true);
+        this.toAbortRequestOnInvalidTokenBinding = retrieveBooleanValueFromEnv("APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING", true);
     }
 
     public static ApproovConfig getInstance() {
@@ -35,8 +37,8 @@ final public class ApproovConfig {
         return approovHeaderName;
     }
 
-    String getApproovClaimHeaderName() {
-        return approovClaimHeaderName;
+    String getApproovTokenBindingHeaderName() {
+        return approovTokenBindingHeaderName;
     }
 
     String getApproovBase64Secret() {
@@ -47,15 +49,15 @@ final public class ApproovConfig {
         return toAbortRequestOnInvalidToken;
     }
 
-    boolean isToAbortRequestOnInvalidCustomPayloadClaim() {
-        return toAbortRequestOnInvalidCustomPayloadClaim;
+    boolean isToAbortRequestOnInvalidTokenBinding() {
+        return toAbortRequestOnInvalidTokenBinding;
     }
 
     private String retrieveApproovBase64Secret() {
         approovBase64Secret = System.getenv("APPROOV_BASE64_SECRET");
 
         if (approovBase64Secret == null) {
-            throw new ApproovAuthenticationException("Cannot retrieve APPROOV_BASE64_SECRET from the environment.");
+            throw new ApproovAuthenticationException("Cannot retrieve APPROOV_BASE64_SECRET from the environment.", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
 
         return approovBase64Secret;

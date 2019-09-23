@@ -1,13 +1,9 @@
 package com.criticalblue.approov.jwt.dto;
 
 public class Hello {
-    private final String hello;
+    private final String text = "";
 
-    public Hello() {
-        this.hello = getHello();
-    }
-
-    public String getHello() {
-        return "Hello World!";
+    public String getText() {
+        return "Hello, World!";
     }
 }
