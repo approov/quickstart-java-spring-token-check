@@ -69,7 +69,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Configuration
     @Order(2)
-    public static class AproovPayloadWebSecurityConfig extends WebSecurityConfigurerAdapter {
+    public static class ApproovTokenBindingWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
