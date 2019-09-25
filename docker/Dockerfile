@@ -1,4 +1,4 @@
-FROM openjdk:11.0.3-slim
+FROM openjdk:11.0.3
 
 ARG CONTAINER_USER="java"
 ARG CONTAINER_UID="1000"
@@ -27,7 +27,6 @@ COPY ./setup ${ROOT_CA_DIR}
 RUN apt update && \
     apt -y upgrade && \
 
-    # Install Required Dependencies
     apt -y install \
       python3 \
       python3-pip \
@@ -40,33 +39,35 @@ RUN apt update && \
       zsh \
       curl \
       git \
-      default-jdk \
       maven && \
 
-
-
-    # Force installation of missing dependencies
+    printf "\n\n----------> FORCING INSTALLATION OF MISSING DEPENDENCIES <------------\n\n" && \
     apt -y -f install && \
 
+    printf "\n\n----------> FIXING INOTIFY WATCHES <------------\n\n" && \
     #https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers
     printf "fs.inotify.max_user_watches=524288\n" >> /etc/sysctl.conf && \
 
+    printf "\n\n----------> ADDING LOCALE <------------\n\n" && \
     echo "en_GB.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen en_GB.UTF-8 && \
     dpkg-reconfigure locales && \
 
+    printf "\n\n----------> ADDING A USER <------------\n\n" && \
     useradd -m -u ${CONTAINER_UID} -s /usr/bin/zsh ${CONTAINER_USER} && \
 
+    printf "\n\n----------> INSTALLING CUSTOM CERTIFICATES <------------\n\n" && \
     cd ${ROOT_CA_DIR} && \
     ./setup-root-certificate.sh "${ROOT_CA_KEY}" "${ROOT_CA_PEM}" "${ROOT_CA_NAME}" && \
     ./add-proxy-certificate.sh "${PROXY_CA_PEM}" && \
 
+    printf "\n\n----------> INSTALLING GRADLE <------------\n\n" && \
     curl -o gradle.zip -fsSL https://services.gradle.org/distributions/gradle-"${GRADLE_VERSION}"-bin.zip && \
     unzip -d /opt/gradle gradle.zip && \
     rm -f gradle.zip && \
     gradle --version && \
 
-    # Install Oh My Zsh for Root and Node user
+    printf "\n\n----------> INSTALLING OH MY ZSH <------------\n\n" && \
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" && \
     chsh -s /usr/bin/zsh && \
     cp -R /root/.oh-my-zsh /home/"${CONTAINER_USER}" && \
@@ -74,7 +75,7 @@ RUN apt update && \
     sed -i "s/\/root/\/home\/${CONTAINER_USER}/g" /home/"${CONTAINER_USER}"/.zshrc && \
     chown -R "${CONTAINER_USER}":"${CONTAINER_USER}" /home/"${CONTAINER_USER}" && \
 
-    # cleaning
+    printf "\n\n----------> CLEANUP <------------\n\n" && \
     rm -rvf /var/lib/apt/lists/*
 
 ENV LANG=en_GB.UTF-8 \

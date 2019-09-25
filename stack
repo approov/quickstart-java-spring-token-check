@@ -136,7 +136,7 @@ Main()
     # CONSTANTS
     ############################################################################
 
-    local DOCKER_IMAGE="approov/java-spring-demo:11-slim"
+    local DOCKER_IMAGE="approov/java-spring-demo:11"
 
     local CONTAINER_NAME="java-spring-demo"
 
