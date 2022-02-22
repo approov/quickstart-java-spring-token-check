@@ -76,6 +76,10 @@ public class ApproovTokenBindingAuthentication {
 
         if ( ! approovTokenPayloadClaims.containsKey("pay") ) {
 
+            if (approovConfig.isToAbortRequestOnInvalidTokenBinding()) {
+                throw new ApproovTokenBindingAuthenticationException("The key `pay`, for the token binding, is missing in the Approov token payload.", HttpStatus.BAD_REQUEST.value());
+            }
+
             logger.warn("The key `pay`, for the token binding, is missing in the Approov token payload.");
 
             // The Approov the token binding is optional, so we cannot throw an exception...

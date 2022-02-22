@@ -127,7 +127,7 @@ Start_Or_Attach_To_App_Container()
         --publish "127.0.0.1:${https_port_map}" \
         --volume "$PWD:/home/java/workspace" \
         --volume "${PWD}/.local/.gradle:/home/java/.gradle" \
-        approov/java-spring-demo:11-slim ${run_command}
+        ${docker_image} ${run_command}
 }
 
 Main()
