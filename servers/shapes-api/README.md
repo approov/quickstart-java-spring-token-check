@@ -8,7 +8,7 @@ The implementation of the Approov token check is on [this folder](./src/main/jav
 Now let's continue reading this README for a **quick start** introduction in how
 to integrate Approov on a project built with the Java Spring Framework.
 
-You mat want to first follow [this demo walk-through](./docs/approov-shapes-api-server.md) before you try the Approov integration on your own app, but it's not mandatory you do it, but doing so will give you a better understanding how everything fits together in the simple Shapes app.
+You may want to first follow [this demo walk-through](./docs/approov-shapes-api-server.md) before you try the Approov integration on your own app, but it's not mandatory you do it, but doing so will give you a better understanding how everything fits together in the simple Shapes app.
 
 
 ## APPROOV VALIDATION PROCESS
@@ -229,8 +229,7 @@ APPROOV_LOGGING_ENABLED=true
 
 ### The Code
 
-Add the package [com.criticalblue.approov.jwt.authentication](./src/main/java/com/criticalblue/approov/jwt/authentication) to your current project and then configure it from the class
-in your project that extends the `WebSecurityConfigurerAdapter`.
+Add the package [com.criticalblue.approov.jwt.authentication](./src/main/java/com/criticalblue/approov/jwt/authentication) to your current project and then configure it from the class in your project that extends the `WebSecurityConfigurerAdapter`.
 
 Let's consider as a starting point an initial `WebSecurityConfig` without
 requiring authentication for any of its endpoints:
@@ -820,9 +819,9 @@ to see and have a feel for how all this works.
 ## PRODUCTION
 
 In order to protect the communication between your mobile app and the API server
-is important to only communicate hover a secure communication channel, aka https.
+is important to only communicate hover a secure communication channel, aka HTTPS.
 
-Please bear in mind that https on its own is not enough, certificate pinning
+Please bear in mind that HTTPS on its own is not enough, certificate pinning
 must be also used to pin the connection between the mobile app and the API
 server in order to prevent [Man in the Middle Attacks](https://approov.io/docs/mitm-detection.html).
 
