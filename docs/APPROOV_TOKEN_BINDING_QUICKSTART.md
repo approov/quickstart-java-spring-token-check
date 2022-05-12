@@ -14,14 +14,14 @@ This quickstart is for developers familiar with Java who are looking for a quick
 
 ## Why?
 
-To lock down your API server to your mobile app. Please read the brief summary in the [README](/README.md#why) at the root of this repo or visit our [website](https://approov.io/product.html) for more details.
+To lock down your API server to your mobile app. Please read the brief summary in the [Approov Overview](/OVERVIEW.md#why) at the root of this repo or visit our [website](https://approov.io/product) for more details.
 
 [TOC](#toc---table-of-contents)
 
 
 ## How it works?
 
-For more background, see the overview in the [README](/README.md#how-it-works) at the root of this repo.
+For more background, see the [Approov Overview](/OVERVIEW.md#how-it-works) at the root of this repo.
 
 The main functionality for the Approov token check is in the file [ApproovAuthentication.java](/servers/hello/src/approov-protected-server/token-binding-check/src/main/java/com/criticalblue/approov/jwt/authentication/ApproovAuthentication.java). Take a look at the `verifyApproovToken()` function to see the simple code for the check.
 
@@ -63,13 +63,17 @@ Adding the API domain also configures the [dynamic certificate pinning](https://
 
 Approov tokens are signed with a symmetric secret. To verify tokens, we need to grab the secret using the [Approov secret command](https://approov.io/docs/latest/approov-cli-tool-reference/#secret-command) and plug it into the Java Spring API server environment to check the signatures of the [Approov Tokens](https://www.approov.io/docs/latest/approov-usage-documentation/#approov-tokens) that it processes.
 
-Retrieve the Approov secret with:
+First, enable your Approov `admin` role with:
 
-```text
+```bash
+eval `approov role admin`
+````
+
+Next, retrieve the Approov secret with:
+
+```bash
 approov secret -get base64
 ```
-
-> **NOTE:** The `approov secret` command requires an [administration role](https://approov.io/docs/latest/approov-usage-documentation/#account-access-roles) to execute successfully.
 
 #### Set the Approov Secret
 
@@ -268,3 +272,30 @@ HTTP/1.1 401 Unauthorized
 
 {}
 ```
+
+[TOC](#toc---table-of-contents)
+
+
+## Issues
+
+If you find any issue while following our instructions then just report it [here](https://github.com/approov/quickstart-java-spring-token-check/issues), with the steps to reproduce it, and we will sort it out and/or guide you to the correct path.
+
+[TOC](#toc---table-of-contents)
+
+
+## Useful Links
+
+If you wish to explore the Approov solution in more depth, then why not try one of the following links as a jumping off point:
+
+* [Approov Free Trial](https://approov.io/signup)(no credit card needed)
+* [Approov Get Started](https://approov.io/product/demo)
+* [Approov QuickStarts](https://approov.io/docs/latest/approov-integration-examples/)
+* [Approov Docs](https://approov.io/docs)
+* [Approov Blog](https://approov.io/blog/)
+* [Approov Resources](https://approov.io/resource/)
+* [Approov Customer Stories](https://approov.io/customer)
+* [Approov Support](https://approov.zendesk.com/hc/en-gb/requests/new)
+* [About Us](https://approov.io/company)
+* [Contact Us](https://approov.io/contact)
+
+[TOC](#toc---table-of-contents)

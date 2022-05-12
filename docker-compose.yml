@@ -14,7 +14,7 @@ services:
     ports:
       - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
     volumes:
-      - ./src/unprotected-server:/home/developer/workspace
+      - ./servers/hello/src/unprotected-server:/home/developer/workspace
       - ./.local/.gradle:/home/developer/.gradle
 
   approov-token-check:
@@ -29,7 +29,7 @@ services:
     ports:
       - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
     volumes:
-      - ./src/approov-protected-server/token-check:/home/developer/workspace
+      - ./servers/hello/src/approov-protected-server/token-check:/home/developer/workspace
       - ./.local/.gradle:/home/developer/.gradle
 
   approov-token-binding-check:
@@ -44,6 +44,6 @@ services:
     ports:
       - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
     volumes:
-      - ./src/approov-protected-server/token-binding-check:/home/developer/workspace
+      - ./servers/hello/src/approov-protected-server/token-binding-check:/home/developer/workspace
       - ./.local/.gradle:/home/developer/.gradle
 

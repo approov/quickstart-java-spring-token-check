@@ -12,7 +12,7 @@ This Approov integration example is from where the code example for the [Approov
 
 ## Why?
 
-To lock down your API server to your mobile app. Please read the brief summary in the [README](/README.md#why) at the root of this repo or visit our [website](https://approov.io/product.html) for more details.
+To lock down your API server to your mobile app. Please read the brief summary in the [Approov Overview](/OVERVIEW.md#why) at the root of this repo or visit our [website](https://approov.io/product) for more details.
 
 [TOC](#toc---table-of-contents)
 
@@ -29,7 +29,7 @@ You can find the endpoint definition [here](./src/main/java/com/criticalblue/app
 
 Take a look at the [`verifyApproovToken()`](./src/main/java/com/criticalblue/approov/jwt/authentication/ApproovAuthentication.java) function to see the simple code for the check, and check out the [`verifyApproovTokenBinding()`](./src/main/java/com/criticalblue/approov/jwt/authentication/ApproovTokenBindingAuthentication.java) function to see how the Approov token binding is verified.
 
-For more background on Approov, see the overview in the [README](/README.md#how-it-works) at the root of this repo.
+For more background on Approov, see the [Approov Overview](/OVERVIEW.md#how-it-works) at the root of this repo.
 
 [TOC](#toc---table-of-contents)
 
@@ -46,7 +46,7 @@ To run this example you will need to have installed:
 
 ## Try the Approov Integration Example
 
-First, you need to set the dummy secret in the `/servers/hello/src/approov-protected-server/token-binding-check/.env` file as explained [here](/README.md#the-dummy-secret).
+First, you need to set the dummy secret in the `/servers/hello/src/approov-protected-server/token-binding-check/.env` file as explained [here](/TESTING.md#the-dummy-secret).
 
 Second, you need to build the server with gradle. From the `./servers/hello/src/approov-protected-server/token-binding-check` folder execute:
 
@@ -90,5 +90,30 @@ Connection: close
 The reason you got a `400` is because no Approoov token isn't provided in the headers of the request.
 
 Finally, you can test that the Approov integration example works as expected with this [Postman collection](/README.md#testing-with-postman) or with some more cURL requests [examples](/README.md#testing-with-curl).
+
+[TOC](#toc---table-of-contents)
+
+
+## Issues
+
+If you find any issue while following our instructions then just report it [here](https://github.com/approov/quickstart-java-spring-token-check/issues), with the steps to reproduce it, and we will sort it out and/or guide you to the correct path.
+
+[TOC](#toc---table-of-contents)
+
+
+## Useful Links
+
+If you wish to explore the Approov solution in more depth, then why not try one of the following links as a jumping off point:
+
+* [Approov Free Trial](https://approov.io/signup)(no credit card needed)
+* [Approov Get Started](https://approov.io/product/demo)
+* [Approov QuickStarts](https://approov.io/docs/latest/approov-integration-examples/)
+* [Approov Docs](https://approov.io/docs)
+* [Approov Blog](https://approov.io/blog/)
+* [Approov Resources](https://approov.io/resource/)
+* [Approov Customer Stories](https://approov.io/customer)
+* [Approov Support](https://approov.zendesk.com/hc/en-gb/requests/new)
+* [About Us](https://approov.io/company)
+* [Contact Us](https://approov.io/contact)
 
 [TOC](#toc---table-of-contents)
