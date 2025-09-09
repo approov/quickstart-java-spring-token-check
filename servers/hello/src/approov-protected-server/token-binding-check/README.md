@@ -57,7 +57,9 @@ Second, you need to build the server with gradle. From the `./servers/hello/src/
 Now, you can run this example from the `/servers/hello/src/approov-protected-server/token-binding-check` folder with:
 
 ```bash
+set -a
 source .env && ./gradlew bootRun
+set +a
 ```
 
 Next, you can test that it works with:
