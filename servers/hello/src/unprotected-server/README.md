@@ -52,7 +52,9 @@ First build the server with gradle. From the `./servers/hello/src/unprotected-se
 Now, you can run this example from the `./servers/hello/src/unprotected-server` folder with:
 
 ```bash
+set -a  # auto-export all assignments
 source .env && ./gradlew bootRun
+set +a  # stop exporting variables
 ```
 
 Finally, you can test that it works with:

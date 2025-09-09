@@ -23,7 +23,7 @@ dependencies {
 
 	compileOnly 'org.jetbrains:annotations:17.0.0'
 
-	compileOnly 'javax.servlet:servlet-api:3.1.0'
+	compileOnly 'javax.servlet:javax.servlet-api:3.1.0'
 
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
