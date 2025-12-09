@@ -74,8 +74,6 @@ public class ApproovApplication {
         return http.build();
     }
 
-    // region Public endpoints
-
     @GetMapping("/unprotected")
     public Map<String, Object> unprotected() {
         return message("Unprotected endpoint reached at " + Instant.now());
@@ -150,10 +148,6 @@ public class ApproovApplication {
         return approovState();
     }
 
-    // endregion
-
-    // region Approov helpers
-
     /**
      * Validates signature/claims when Approov is enabled.
      */
@@ -218,7 +212,7 @@ public class ApproovApplication {
         }
     }
 
-    // Approov CLI may emit bindings using standard Base64; accept both to stay compatible.
+    // Approov CLI may emit bindings using standard Base64, accept both to stay compatible.
     private String computeBindingStd(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -250,10 +244,10 @@ public class ApproovApplication {
             secret = readDotEnvSecret();
         }
         if (secret == null || secret.trim().isEmpty()) {
-            secret = "h+CX0tOzdAAR9l15bWAqvq7w9olk66daIH+Xk+IAHhVVHszjDzeGobzNnqyRze3lw/WVyWrc2gZfh3XXfBOmww==";
-            log.warn("APPROOV_BASE64_SECRET not set; using demo secret");
+            throw new IllegalStateException("APPROOV_BASE64_SECRET is not set; cannot start Approov validation");
         }
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret.trim()));
+            return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret.trim()));
+
     }
 
     private String readDotEnvSecret() {
@@ -282,5 +276,4 @@ public class ApproovApplication {
         return payload;
     }
 
-    // endregion
 }

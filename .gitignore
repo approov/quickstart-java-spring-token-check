@@ -31,3 +31,4 @@ nbdist/
 
 .local/
 .env
+.config/
