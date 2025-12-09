@@ -1,4 +1,4 @@
-package com.criticalblue.approov;
+package io.approov;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
