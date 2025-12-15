@@ -1,4 +1,4 @@
-# Approov Backend Quickstart - {{LANGUAGE}} {{FRAMEWORK}}
+# Approov Backend Quickstart - Java Spring
 
 This project provides a server-side example of Approov token verification for a protected backend API. It exposes a simple API that verifies Approov tokens before granting access to protected endpoints and demonstrates how the endpoints behave under the current Approov configuration:
 
@@ -232,9 +232,9 @@ curl -X GET http://localhost:8080/approov-state       # check current state
 
 **Environments where the quickstart was tested:**
 ```text
-* Runtime: {{RUNTIME_VERSION}}
-* Framework: {{LANGUAGE}} {{FRAMEWORK}}
-* Build Tool: {{BUILD_TOOL}} {{BUILD_TOOL_VERSION}}
+* Runtime: Java 17 (JVM 17.0.14)
+* Framework: Spring Boot 2.7.18
+* Build Tool: Gradle 7.6.6
 ```
 
 If you encounter any problems while following this guide, or have any other concerns, please let us know by opening an issue [here](https://github.com/approov/quickstart-java-spring-token-check/issues) and we will be happy to assist you.
