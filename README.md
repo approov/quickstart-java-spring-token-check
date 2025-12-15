@@ -7,13 +7,7 @@ This project provides a server-side example of Approov token verification for a 
  - `/token-binding` - requires a valid Approov token which is bound to a header value.
  - `/token-double-binding` - requires a valid Approov token which is bound to two header values.
 
-Language specific version:  
-In this example, Approov protection is implemented by the ApproovFilter inside [ApproovApplication.java](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L220-L278), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the same file, in [SecurityConfig.configure(HttpSecurity)](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L190-L215).
-
-
-
-<!-- Language specific version:  
-In this example, Approov protection is provided by [ApproovAuthenticationProvider.java](https://github.com/KMilej/quickstart-java-spring-token-check/blob/c26a41a262c5db6e57f0eeec83b6db699b70bfc4/src/main/java/com/criticalblue/approov/jwt/authentication/ApproovAuthenticationProvider.java#L15-L43). This is chained into Spring's HttpSecurity web builder in [WebSecurityConfig.java](https://github.com/KMilej/quickstart-java-spring-token-check/blob/c26a41a262c5db6e57f0eeec83b6db699b70bfc4/src/main/java/com/criticalblue/approov/jwt/WebSecurityConfig.java#L47-L82). -->
+In this example, Approov protection is implemented by the ApproovFilter inside [ApproovApplication.java](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L220-L278), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the same file [SecurityConfig.configure(HttpSecurity)](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L190-L215).
 
 ## Approov Token Verification Flow
 
