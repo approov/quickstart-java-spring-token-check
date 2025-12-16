@@ -186,14 +186,13 @@ public class ApproovApplication {
     @EnableWebSecurity
     static class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-        private final AuthenticationEntryPoint authEntryPoint =
-                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+        private final AuthenticationEntryPoint authEntryPoint = new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
 
         @Bean
         public UserDetailsService userDetailsService() {
             return new InMemoryUserDetailsManager();
         }
-                
+
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             http.csrf().disable()
@@ -223,7 +222,8 @@ public class ApproovApplication {
     }
 
     /**
-     * Stateless filter that validates the Approov token (and bindings when enabled) before protected endpoints.
+     * Stateless filter that validates the Approov token (and bindings when enabled)
+     * before protected endpoints.
      */
     static class ApproovFilter extends OncePerRequestFilter {
 
@@ -273,9 +273,8 @@ public class ApproovApplication {
                     }
                 }
 
-                Authentication authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                "approov-token", null, Collections.emptyList());
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        "approov-token", null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 filterChain.doFilter(request, response);
             } catch (JwtException | IllegalArgumentException e) {
