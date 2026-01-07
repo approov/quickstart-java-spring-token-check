@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Builds the quickstart backend container image and configures scripts/install-prerequisites.sh and scripts/build.sh
 # as the entrypoint used both locally and when deployed via Docker.
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jdk
 
 ENV APP_HOME=/workspace \
     RUN_MODE=container

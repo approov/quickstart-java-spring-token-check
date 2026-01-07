@@ -7,7 +7,7 @@ This project provides a server-side example of Approov token verification for a 
  - `/token-binding` - requires a valid Approov token which is bound to a header value.
  - `/token-double-binding` - requires a valid Approov token which is bound to two header values.
 
-In this example, Approov protection is implemented by the ApproovFilter inside [ApproovApplication.java](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L228-L285), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the same file [SecurityConfig.configure(HttpSecurity)](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L198-L223).
+In this example, Approov protection is implemented by the [ApproovTokenVerifier](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L225-L353), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the [SecurityConfig](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L188-L219).
 
 ## Approov Token Verification Flow
 
@@ -228,9 +228,9 @@ curl -X GET http://localhost:8080/approov-state       # check current state
 
 **Environments where the quickstart was tested:**
 ```text
-* Runtime: Java 17 (JVM 17.0.14)
-* Framework: Spring Boot 2.7.18
-* Build Tool: Gradle 7.6.6
+* Runtime: Java 21 (JVM 21.0.9)
+* Framework: Spring Boot 3.2.5
+* Build Tool: Gradle 8.7
 ```
 
 If you encounter any problems while following this guide, or have any other concerns, please let us know by opening an issue [here](https://github.com/approov/quickstart-java-spring-token-check/issues) and we will be happy to assist you.

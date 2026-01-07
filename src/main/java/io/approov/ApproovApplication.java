@@ -12,10 +12,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -34,7 +34,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -185,7 +185,7 @@ public class ApproovApplication {
 
     @Configuration
     @EnableWebSecurity
-    static class SecurityConfig extends WebSecurityConfigurerAdapter {
+    static class SecurityConfig {
 
         private final AuthenticationEntryPoint authEntryPoint = new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
 
@@ -194,31 +194,27 @@ public class ApproovApplication {
             return new InMemoryUserDetailsManager();
         }
 
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http.csrf().disable()
-                    .sessionManagement()
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    .and()
-                    .authorizeRequests()
-                    .antMatchers(
-                            "/",
-                            "/unprotected",
-                            "/approov-state",
-                            "/approov/enable",
-                            "/approov/disable",
-                            "/token-binding/enable",
-                            "/token-binding/disable")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated()
-                    .and()
-                    .exceptionHandling()
-                    .authenticationEntryPoint(authEntryPoint)
-                    .and()
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+            http.csrf(csrf -> csrf.disable())
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(
+                                    "/",
+                                    "/unprotected",
+                                    "/approov-state",
+                                    "/approov/enable",
+                                    "/approov/disable",
+                                    "/token-binding/enable",
+                                    "/token-binding/disable")
+                            .permitAll()
+                            .anyRequest()
+                            .authenticated())
+                    .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPoint))
                     .addFilterBefore(
                             new ApproovTokenVerifier(authEntryPoint),
                             UsernamePasswordAuthenticationFilter.class);
+            return http.build();
         }
     }
 
