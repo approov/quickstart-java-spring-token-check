@@ -97,7 +97,7 @@ public class ApproovApplication {
             LOGGER.error("APPROOV_BASE64URL_SECRET environment variable is not set");
             throw new IllegalStateException("APPROOV_BASE64URL_SECRET environment variable is not set");
         }
-        return Base64.getUrlDecoder().decode(secret.trim());       
+        return Base64.getUrlDecoder().decode(secret.trim());
     }
 
     @RestController
@@ -289,12 +289,12 @@ public class ApproovApplication {
         }
 
         private Claims verifyApproovToken(String token) {
-            Jws<Claims> claims = Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(approovSecret()))
+            Jws<Claims> claims = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(approovSecret()))
                     .build()
-                    .parseClaimsJws(token);
-            validateExpiration(claims.getBody());
-            return claims.getBody();
+                    .parseSignedClaims(token);
+            validateExpiration(claims.getPayload());
+            return claims.getPayload();
         }
 
         private boolean needsBindingCheck(String path) {
