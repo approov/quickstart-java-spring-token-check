@@ -63,13 +63,9 @@ bash run-server.sh
 ```
 
 This script:
-- Builds and starts containers – runs `docker compose -f compose.yaml up -d --build app` to build the image and launch the application in the background.
-- Runs test.sh – which executes all endpoint tests 
-  - `/unprotected` - no security headers required.
-  - `/token-check` - requires the `Approov-Token` header.
-  - `/token-binding` - requires `Approov-Token` and `Authorization` headers.
-  - `/token-double-binding` - requires `Approov-Token`, `Authorization`, and `Content-Digest` headers.
-- Displays results and stops containers when finished.
+- Builds and starts the container via `scripts/build.sh` (`docker build` + `docker run`) and waits for `/approov-state` to be ready.
+
+*Once finished, press `Ctrl+C` to stop log tailing; the container keeps running unless you stop it. Use `docker ps` to find the container name and `docker stop <container_name>` to stop it.*
 
 ### Automated and Manual Testing
 
