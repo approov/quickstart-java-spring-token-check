@@ -42,9 +42,9 @@ In this example, Approov protection is implemented by the ApproovFilter inside [
     cp .env.example .env
     ```
 
-5. ***Configure secret*** - fetch the secret and add it to `.env` (`APPROOV_BASE64_SECRET`):
+5. ***Configure secret*** - fetch the secret and add it to `.env` (`APPROOV_BASE64URL_SECRET`):
    ```bash
-   approov secret -get base64
+   approov secret -get base64url
    ```
 
 6. ***Register API domain*** - point Approov at your backend API (default example.com):
@@ -71,7 +71,7 @@ This script:
   - `/token-double-binding` - requires `Approov-Token`, `Authorization`, and `Content-Digest` headers.
 - Displays results and stops containers when finished.
 
-## Automated and Manual Testing
+### Automated and Manual Testing
 
 *When the server is running, validate the endpoints via the automated bash script or by running the manual checks below*
 
@@ -85,9 +85,9 @@ This script:
 - Runs endpoint tests against `/unprotected` (no token), `/token-check` (valid/invalid Approov tokens), `/token-binding` (token bound to `Authorization`), and `/token-double-binding` (token bound to `Authorization` + `Content-Digest`).
 - Logs full request/response details to `.config/logs/<timestamp>.log`.
 
-### *1. Unprotected Endpoint (No Approov)*
+#### *1. Unprotected Endpoint (No Approov)*
 
-- The client sends a normal HTTPS request.
+- The client sends a normal HTTP request.
 - The server **does not verify** any Approov token or extra authentication header.
 - This means **any client** (even tampered or unauthorized) can call the API if they know the URL.
 
@@ -104,7 +104,7 @@ Content-Type: application/json
 Cache-Control: no-cache
 ```
 
-### *2. Approov Token Check*
+#### *2. Approov Token Check*
 
 - The client includes an `Approov-Token` (a short-lived JWT) in each API request header.
 - The server verifies this token using the **Approov secret key** that is securely configured on the backend and checks:
@@ -139,14 +139,14 @@ Cache-Control: no-cache
 
 *If you use an invalid or missing token, the server will respond with `401 Unauthorized`.*
 
-### *3. Approov Token Binding Check*
+#### *3. Approov Token Binding Check*
 
 - The client sends two headers on authenticated API calls:
     - `Approov-Token`
     - `Authorization` – your auth token value (e.g., `ExampleAuthToken==`)
 - The server verifies the token and ensures that the bound value matches what the app used.
 - Prevents token replay - the Approov token cannot be reused or stolen for another session.
-- **Use case:** stronger protection for authenticated API calls tied to a specific user or device.
+- **Use case:** Stronger protection for authenticated API calls tied to a specific user or device.
 
 ***The following example shows how the API responds when an Approov token with binding is required.***
 
@@ -181,7 +181,7 @@ Cache-Control: no-cache
     - `Authorization`
     - `Content-Digest` It is combined with the `Authorization` header to create a stronger binding.
 - Both are included in the hash inside the Approov token. This means the server verifies a single hash that covers both authentication credentials.
-- **Use case:** This configuration provides the highest level of protection for authenticated API requests:
+- **Use case:** Stronger protection then single binding by tying both headers together.
 
 ***The following example shows how the API responds when an Approov token with two bindings is required.***
 
@@ -245,4 +245,3 @@ If you encounter any problems while following this guide, or have any other conc
 * [Approov Support](https://approov.io/info/technical-support)
 * [About Us](https://approov.io/company)
 * [Contact Us](https://approov.io/info/contact)
-

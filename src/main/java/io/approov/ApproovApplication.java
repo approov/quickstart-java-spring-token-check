@@ -61,6 +61,10 @@ public class ApproovApplication {
     private static final AtomicBoolean TOKEN_BINDING_ENABLED = new AtomicBoolean(true);
     private static final byte[] APPROOV_SECRET = loadApproovSecret();
 
+    private static boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(ApproovApplication.class, args);
     }
@@ -88,11 +92,12 @@ public class ApproovApplication {
     }
 
     private static byte[] loadApproovSecret() {
-        String secret = System.getenv("APPROOV_BASE64_SECRET");
-        if (secret == null || secret.trim().isEmpty()) {
-            throw new IllegalStateException("Missing APPROOV_BASE64_SECRET environment variable.");
+        String secret = System.getenv("APPROOV_BASE64URL_SECRET");
+        if (!hasText(secret)) {
+            LOGGER.error("APPROOV_BASE64URL_SECRET environment variable is not set");
+            throw new IllegalStateException("APPROOV_BASE64URL_SECRET environment variable is not set");
         }
-        return Base64.getDecoder().decode(secret.trim());
+        return Base64.getUrlDecoder().decode(secret.trim());       
     }
 
     @RestController
@@ -176,10 +181,6 @@ public class ApproovApplication {
             body.put("details", details);
             return body;
         }
-
-        private boolean hasText(String value) {
-            return value != null && !value.trim().isEmpty();
-        }
     }
 
     @Configuration
@@ -216,7 +217,7 @@ public class ApproovApplication {
                     .authenticationEntryPoint(authEntryPoint)
                     .and()
                     .addFilterBefore(
-                            new ApproovFilter(authEntryPoint),
+                            new ApproovTokenVerifier(authEntryPoint),
                             UsernamePasswordAuthenticationFilter.class);
         }
     }
@@ -225,22 +226,22 @@ public class ApproovApplication {
      * Stateless filter that validates the Approov token (and bindings when enabled)
      * before protected endpoints.
      */
-    static class ApproovFilter extends OncePerRequestFilter {
+    static class ApproovTokenVerifier extends OncePerRequestFilter {
 
-        private static final Set<String> PROTECTED_ENDPOINTS = Collections.unmodifiableSet(
+        private static final Set<String> APPROOV_PROTECTED_PATHS = Collections.unmodifiableSet(
                 new java.util.HashSet<>(Arrays.asList(
                         "/token-check", "/token-binding", "/token-double-binding")));
 
         private final AuthenticationEntryPoint entryPoint;
 
-        ApproovFilter(AuthenticationEntryPoint entryPoint) {
+        ApproovTokenVerifier(AuthenticationEntryPoint entryPoint) {
             this.entryPoint = entryPoint;
         }
 
         @Override
         protected boolean shouldNotFilter(HttpServletRequest request) {
             String path = request.getRequestURI();
-            return path == null || !PROTECTED_ENDPOINTS.contains(path);
+            return path == null || !APPROOV_PROTECTED_PATHS.contains(path);
         }
 
         @Override
@@ -262,7 +263,7 @@ public class ApproovApplication {
             }
 
             try {
-                Claims claims = parseApproovToken(rawToken.trim());
+                Claims claims = verifyApproovToken(rawToken.trim());
                 String path = request.getRequestURI();
 
                 if (needsBindingCheck(path) && isTokenBindingEnabled()) {
@@ -291,7 +292,7 @@ public class ApproovApplication {
                     new BadCredentialsException("Approov authentication failed."));
         }
 
-        private Claims parseApproovToken(String token) {
+        private Claims verifyApproovToken(String token) {
             Jws<Claims> claims = Jwts.parserBuilder()
                     .setSigningKey(Keys.hmacShaKeyFor(approovSecret()))
                     .build()
@@ -308,7 +309,6 @@ public class ApproovApplication {
             if ("/token-binding".equals(path)) {
                 return trimOrNull(request.getHeader(AUTH_HEADER));
             }
-
             String authorization = trimOrNull(request.getHeader(AUTH_HEADER));
             String digest = trimOrNull(request.getHeader(DIGEST_HEADER));
             if (!hasText(authorization) || !hasText(digest)) {
@@ -322,12 +322,11 @@ public class ApproovApplication {
             if (!hasText(expected)) {
                 return false;
             }
-
-            String computed = hashBase64(bindingValue);
+            String computed = hashBase64Url(bindingValue);
             return expected.trim().equals(computed);
         }
 
-        private String hashBase64(String value) {
+        private String hashBase64Url(String value) {
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
@@ -354,10 +353,6 @@ public class ApproovApplication {
 
         private String trimOrNull(String value) {
             return value == null ? null : value.trim();
-        }
-
-        private boolean hasText(String value) {
-            return value != null && !value.trim().isEmpty();
         }
     }
 }
