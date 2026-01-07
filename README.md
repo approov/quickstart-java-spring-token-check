@@ -69,7 +69,7 @@ This script:
 
 ### Automated and Manual Testing
 
-*When the server is running, validate the endpoints via the automated bash script or by running the manual checks below*
+*When the server is running (in a different terminal), validate the endpoints via the automated bash script or by running the manual checks below*
 
 ```bash
 bash test.sh
