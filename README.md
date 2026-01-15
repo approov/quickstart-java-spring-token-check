@@ -7,7 +7,7 @@ This project provides a server-side example of Approov token verification for a 
  - `/token-binding` - requires a valid Approov token which is bound to a header value.
  - `/token-double-binding` - requires a valid Approov token which is bound to two header values.
 
-In this example, Approov protection is implemented by the [ApproovTokenVerifier](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L225-L353), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the [SecurityConfig](https://github.com/KMilej/quickstart-java-spring/blob/main/src/main/java/io/approov/ApproovApplication.java#L188-L219).
+In this example, Approov protection is implemented by the [ApproovTokenVerifier](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L225-L353), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the [SecurityConfig](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L188-L219).
 
 ## Approov Token Verification Flow
 
