@@ -5,9 +5,21 @@ This project provides a server-side example of Approov token verification for a 
  - `/unprotected` - no Approov token required.
  - `/token-check` - requires a valid Approov token.
  - `/token-binding` - requires a valid Approov token which is bound to a header value.
- - `/token-double-binding` - requires a valid Approov token which is bound to two header values.
+ - `/token-double-binding` - requires a valid Approov token which is bound to two header values.    
 
-In this example, Approov protection is implemented by the [ApproovTokenVerifier](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L225-L353), which validates the Approov token (signature + expiry) and enforces token binding where required. The filter is wired into Spring Security in the [SecurityConfig](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L188-L219).
+In this example, Approov token check is implemented in `ApproovApplication.java`. The `ApproovTokenVerifier` filter is registered in Spring Security by the [SecurityConfig.securityFilterChain](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L188-L217). The responsibilities break down as follows:
+
+1. **JWT Approov Token validation (signature + expiry)** is handled by [verifyApproovToken](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L291-L298) and [validateExpiration](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L340-L348). It verifies the HMAC (HS256) signature and rejects tokens that are missing or past `exp`.
+
+2. **Token binding (pay + hash)** is implemented by [isBindingValid + hashBase64Url](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L316-L333). It computes `base64(sha256(binding_value))` and compares it to `pay`.
+
+3. **Middleware enforcement** is done by [doFilterInternal](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L243-L289). Requests without valid token/binding are rejected with 401.
+
+4. **Binding value selection (what gets hashed)** is in [extractBindingValue](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L304-L314). It uses `Authorization` for single binding, or `Authorization` + `Content-Digest` for double binding.
+
+5. **Protected route requirements** are defined by [APPROOV_PROTECTED_PATHS](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L227-L229) and [needsBindingCheck](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L300-L302).
+
+6. **Protected routes are registered** in [ApproovController](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L147-L170).
 
 ## Approov Token Verification Flow
 
