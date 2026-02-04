@@ -10,7 +10,5 @@ WORKDIR /app
 
 COPY . .
 
-RUN bash scripts/install-prerequisites.sh
-
 # Provide APP_START_CMD via --env-file.
 CMD ["bash", "scripts/build.sh"]

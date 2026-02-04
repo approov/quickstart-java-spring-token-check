@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,7 +58,8 @@ public class ApproovApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApproovApplication.class);
     private static final String APPROOV_HEADER = "Approov-Token";
     private static final String AUTH_HEADER = "Authorization";
-    private static final String DIGEST_HEADER = "Content-Digest";
+    private static final String SESSION_ID_HEADER = "SessionId";
+    private static final String PLACEHOLDER_SECRET = "approov_base64url_secret_here";
     private static final AtomicBoolean APPROOV_ENABLED = new AtomicBoolean(true);
     private static final AtomicBoolean TOKEN_BINDING_ENABLED = new AtomicBoolean(true);
     private static final byte[] APPROOV_SECRET = loadApproovSecret();
@@ -93,11 +96,16 @@ public class ApproovApplication {
 
     private static byte[] loadApproovSecret() {
         String secret = System.getenv("APPROOV_BASE64URL_SECRET");
-        if (!hasText(secret)) {
-            LOGGER.error("APPROOV_BASE64URL_SECRET environment variable is not set");
-            throw new IllegalStateException("APPROOV_BASE64URL_SECRET environment variable is not set");
+        if (!hasText(secret) || PLACEHOLDER_SECRET.equals(secret.trim())) {
+            LOGGER.error("Required secret is not set");
+            throw new IllegalStateException("Required secret is not set");
         }
-        return Base64.getUrlDecoder().decode(secret.trim());
+        try {
+            return Base64.getUrlDecoder().decode(secret.trim());
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Required secret is invalid");
+            throw new IllegalStateException("Required secret is invalid", e);
+        }
     }
 
     @RestController
@@ -161,11 +169,11 @@ public class ApproovApplication {
         @GetMapping("/token-double-binding")
         public Map<String, Object> tokenDoubleBinding(
                 @RequestHeader(value = AUTH_HEADER, required = false) String authorization,
-                @RequestHeader(value = DIGEST_HEADER, required = false) String contentDigest) {
+                @RequestHeader(value = SESSION_ID_HEADER, required = false) String sessionId) {
             Map<String, Object> response = infoPayload(
                     "Protected endpoint '/token-double-binding'; dual token binding enforced.");
             response.put("authorizationHeaderPresent", hasText(authorization));
-            response.put("contentDigestHeaderPresent", hasText(contentDigest));
+            response.put("sessionIdHeaderPresent", hasText(sessionId));
             return response;
         }
 
@@ -245,27 +253,34 @@ public class ApproovApplication {
                 HttpServletRequest request,
                 HttpServletResponse response,
                 FilterChain filterChain) throws ServletException, IOException {
+            String path = request.getRequestURI();
+            List<String> bindingHeaders = bindingHeadersForPath(path);
+            List<String> requiredHeaders = requiredHeadersForRequest(bindingHeaders);
 
             if (!isApproovEnabled()) {
                 SecurityContextHolder.getContext().setAuthentication(disabledAuthentication());
                 filterChain.doFilter(request, response);
+                logResponseIfNeeded(request, response, "approov_disabled", requiredHeaders);
                 return;
             }
 
             String rawToken = request.getHeader(APPROOV_HEADER);
             if (!hasText(rawToken)) {
-                unauthorized(request, response);
+                unauthorized(request, response, "missing_approov_token", requiredHeaders, null, null);
                 return;
             }
 
             try {
                 Claims claims = verifyApproovToken(rawToken.trim());
-                String path = request.getRequestURI();
 
-                if (needsBindingCheck(path) && isTokenBindingEnabled()) {
-                    String bindingValue = extractBindingValue(path, request);
-                    if (!hasText(bindingValue) || !isBindingValid(bindingValue, claims)) {
-                        unauthorized(request, response);
+                if (isTokenBindingEnabled() && !bindingHeaders.isEmpty()) {
+                    String bindingValue = extractBindingValue(request, bindingHeaders);
+                    if (!hasText(bindingValue)) {
+                        unauthorized(request, response, "missing_binding_header", requiredHeaders, null, null);
+                        return;
+                    }
+                    if (!isBindingValid(bindingValue, claims)) {
+                        unauthorized(request, response, "binding_mismatch", requiredHeaders, null, null);
                         return;
                     }
                 }
@@ -274,14 +289,32 @@ public class ApproovApplication {
                         "approov-token", null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 filterChain.doFilter(request, response);
+                logResponseIfNeeded(request, response, "approov_ok", requiredHeaders);
             } catch (JwtException | IllegalArgumentException e) {
-                LOGGER.error("Approov token verification failed: {}", e.getMessage());
-                unauthorized(request, response);
+                unauthorized(
+                        request,
+                        response,
+                        "token_verification_failed",
+                        requiredHeaders,
+                        e.getMessage(),
+                        e.getClass().getSimpleName());
             }
         }
 
         private void unauthorized(
-                HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+                HttpServletRequest request,
+                HttpServletResponse response,
+                String reason,
+                List<String> requiredHeaders,
+                String error,
+                String exception) throws IOException, ServletException {
+            logRequest(
+                    request,
+                    HttpStatus.UNAUTHORIZED.value(),
+                    "approov_failed:" + reason,
+                    requiredHeaders,
+                    error,
+                    exception);
             entryPoint.commence(
                     request,
                     response,
@@ -297,20 +330,122 @@ public class ApproovApplication {
             return claims.getPayload();
         }
 
-        private boolean needsBindingCheck(String path) {
-            return "/token-binding".equals(path) || "/token-double-binding".equals(path);
+        private List<String> bindingHeadersForPath(String path) {
+            if ("/token-binding".equals(path)) {
+                return List.of(AUTH_HEADER);
+            }
+            if ("/token-double-binding".equals(path)) {
+                return List.of(AUTH_HEADER, SESSION_ID_HEADER);
+            }
+            return Collections.emptyList();
         }
 
-        private String extractBindingValue(String path, HttpServletRequest request) {
-            if ("/token-binding".equals(path)) {
-                return trimOrNull(request.getHeader(AUTH_HEADER));
+        private List<String> requiredHeadersForRequest(List<String> bindingHeaders) {
+            if (!isTokenBindingEnabled() || bindingHeaders.isEmpty()) {
+                return List.of(APPROOV_HEADER);
             }
-            String authorization = trimOrNull(request.getHeader(AUTH_HEADER));
-            String digest = trimOrNull(request.getHeader(DIGEST_HEADER));
-            if (!hasText(authorization) || !hasText(digest)) {
+            List<String> headers = new ArrayList<>(1 + bindingHeaders.size());
+            headers.add(APPROOV_HEADER);
+            headers.addAll(bindingHeaders);
+            return headers;
+        }
+
+        private void logResponseIfNeeded(
+                HttpServletRequest request,
+                HttpServletResponse response,
+                String successSummary,
+                List<String> requiredHeaders) {
+            int status = response.getStatus();
+            if (status == HttpStatus.UNAUTHORIZED.value()) {
+                logRequest(
+                        request,
+                        status,
+                        "approov_failed:downstream_unauthorized",
+                        requiredHeaders,
+                        null,
+                        null);
+                return;
+            }
+            logRequest(request, status, successSummary, requiredHeaders, null, null);
+        }
+
+        private void logRequest(
+                HttpServletRequest request,
+                int status,
+                String summary,
+                List<String> requiredHeaders,
+                String error,
+                String exception) {
+            if (status != HttpStatus.OK.value() && status != HttpStatus.UNAUTHORIZED.value()) {
+                return;
+            }
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            String ip = request.getRemoteAddr();
+            int port = request.getServerPort();
+            String flags = String.format(
+                    "{\"approovEnabled\":%s,\"tokenBindingEnabled\":%s}",
+                    isApproovEnabled(),
+                    isTokenBindingEnabled());
+            String requiredHeadersValue = formatRequiredHeaders(requiredHeaders);
+            if (hasText(error) || hasText(exception)) {
+                LOGGER.warn(
+                        "http.request.completed \"summary\":\"{}\",\"method\":\"{}\",\"path\":\"{}\","
+                                + "\"status\":{},\"ip\":\"{}\",\"port\":{}, {} \"required_headers\":{} "
+                                + "\"error\":\"{}\" \"exception\":\"{}\"",
+                        summary,
+                        method,
+                        path,
+                        status,
+                        ip,
+                        port,
+                        flags,
+                        requiredHeadersValue,
+                        error,
+                        exception);
+            } else {
+                LOGGER.info(
+                        "http.request.completed \"summary\":\"{}\",\"method\":\"{}\",\"path\":\"{}\","
+                                + "\"status\":{},\"ip\":\"{}\",\"port\":{}, {} \"required_headers\":{}",
+                        summary,
+                        method,
+                        path,
+                        status,
+                        ip,
+                        port,
+                        flags,
+                        requiredHeadersValue);
+            }
+        }
+
+        private String formatRequiredHeaders(List<String> headers) {
+            if (headers == null || headers.isEmpty()) {
+                return "[]";
+            }
+            StringBuilder builder = new StringBuilder("[");
+            for (int i = 0; i < headers.size(); i++) {
+                if (i > 0) {
+                    builder.append(',');
+                }
+                builder.append('"').append(headers.get(i)).append('"');
+            }
+            builder.append(']');
+            return builder.toString();
+        }
+
+        private String extractBindingValue(HttpServletRequest request, List<String> bindingHeaders) {
+            if (bindingHeaders.isEmpty()) {
                 return null;
             }
-            return authorization + digest;
+            StringBuilder combined = new StringBuilder();
+            for (String header : bindingHeaders) {
+                String value = trimOrNull(request.getHeader(header));
+                if (!hasText(value)) {
+                    return null;
+                }
+                combined.append(value);
+            }
+            return combined.toString();
         }
 
         private boolean isBindingValid(String bindingValue, Claims claims) {
@@ -318,11 +453,13 @@ public class ApproovApplication {
             if (!hasText(expected)) {
                 return false;
             }
-            String computed = hashBase64Url(bindingValue);
-            return expected.trim().equals(computed);
+            String computed = hashBase64(bindingValue);
+            return MessageDigest.isEqual(
+                    expected.trim().getBytes(StandardCharsets.UTF_8),
+                    computed.getBytes(StandardCharsets.UTF_8));
         }
 
-        private String hashBase64Url(String value) {
+        private String hashBase64(String value) {
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
