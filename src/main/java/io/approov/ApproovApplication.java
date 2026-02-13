@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,8 +44,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -221,7 +222,7 @@ public class ApproovApplication {
                     .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPoint))
                     .addFilterBefore(
                             new ApproovTokenVerifier(authEntryPoint),
-                            UsernamePasswordAuthenticationFilter.class);
+                            AuthorizationFilter.class);
             return http.build();
         }
     }
@@ -237,6 +238,7 @@ public class ApproovApplication {
                         "/token-check", "/token-binding", "/token-double-binding")));
 
         private final AuthenticationEntryPoint entryPoint;
+        private final ApproovTokenValidator validator = new ApproovTokenValidator();
 
         ApproovTokenVerifier(AuthenticationEntryPoint entryPoint) {
             this.entryPoint = entryPoint;
@@ -254,8 +256,7 @@ public class ApproovApplication {
                 HttpServletResponse response,
                 FilterChain filterChain) throws ServletException, IOException {
             String path = request.getRequestURI();
-            List<String> bindingHeaders = bindingHeadersForPath(path);
-            List<String> requiredHeaders = requiredHeadersForRequest(bindingHeaders);
+            List<String> requiredHeaders = validator.requiredHeadersForPath(path);
 
             if (!isApproovEnabled()) {
                 SecurityContextHolder.getContext().setAuthentication(disabledAuthentication());
@@ -264,90 +265,41 @@ public class ApproovApplication {
                 return;
             }
 
-            String rawToken = request.getHeader(APPROOV_HEADER);
-            if (!hasText(rawToken)) {
-                unauthorized(request, response, "missing_approov_token", requiredHeaders, null, null);
+            ValidationResult validation = validator.validate(path, request::getHeader);
+            if (!validation.isSuccessful()) {
+                logValidationFailure(request, validation);
+                SecurityContextHolder.clearContext();
+                commenceUnauthorized(request, response);
                 return;
             }
 
-            try {
-                Claims claims = verifyApproovToken(rawToken.trim());
-
-                if (isTokenBindingEnabled() && !bindingHeaders.isEmpty()) {
-                    String bindingValue = extractBindingValue(request, bindingHeaders);
-                    if (!hasText(bindingValue)) {
-                        unauthorized(request, response, "missing_binding_header", requiredHeaders, null, null);
-                        return;
-                    }
-                    if (!isBindingValid(bindingValue, claims)) {
-                        unauthorized(request, response, "binding_mismatch", requiredHeaders, null, null);
-                        return;
-                    }
-                }
-
-                Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        "approov-token", null, Collections.emptyList());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                filterChain.doFilter(request, response);
-                logResponseIfNeeded(request, response, "approov_ok", requiredHeaders);
-            } catch (JwtException | IllegalArgumentException e) {
-                unauthorized(
-                        request,
-                        response,
-                        "token_verification_failed",
-                        requiredHeaders,
-                        e.getMessage(),
-                        e.getClass().getSimpleName());
-            }
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    "approov-token", null, Collections.emptyList());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+            logResponseIfNeeded(request, response, "approov_ok", validation.requiredHeaders());
         }
 
-        private void unauthorized(
-                HttpServletRequest request,
-                HttpServletResponse response,
-                String reason,
-                List<String> requiredHeaders,
-                String error,
-                String exception) throws IOException, ServletException {
+        private void logValidationFailure(HttpServletRequest request, ValidationResult validation) {
+            ValidationError error = validation.error();
+            if (error == null) {
+                return;
+            }
             logRequest(
                     request,
                     HttpStatus.UNAUTHORIZED.value(),
-                    "approov_failed:" + reason,
-                    requiredHeaders,
-                    error,
-                    exception);
+                    "approov_failed:" + error.reason(),
+                    validation.requiredHeaders(),
+                    error.message(),
+                    error.exception());
+        }
+
+        private void commenceUnauthorized(HttpServletRequest request, HttpServletResponse response)
+                throws IOException, ServletException {
             entryPoint.commence(
                     request,
                     response,
                     new BadCredentialsException("Approov authentication failed."));
-        }
-
-        private Claims verifyApproovToken(String token) {
-            Jws<Claims> claims = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(approovSecret()))
-                    .build()
-                    .parseSignedClaims(token);
-            validateExpiration(claims.getPayload());
-            return claims.getPayload();
-        }
-
-        private List<String> bindingHeadersForPath(String path) {
-            if ("/token-binding".equals(path)) {
-                return List.of(AUTH_HEADER);
-            }
-            if ("/token-double-binding".equals(path)) {
-                return List.of(AUTH_HEADER, SESSION_ID_HEADER);
-            }
-            return Collections.emptyList();
-        }
-
-        private List<String> requiredHeadersForRequest(List<String> bindingHeaders) {
-            if (!isTokenBindingEnabled() || bindingHeaders.isEmpty()) {
-                return List.of(APPROOV_HEADER);
-            }
-            List<String> headers = new ArrayList<>(1 + bindingHeaders.size());
-            headers.add(APPROOV_HEADER);
-            headers.addAll(bindingHeaders);
-            return headers;
         }
 
         private void logResponseIfNeeded(
@@ -433,59 +385,187 @@ public class ApproovApplication {
             return builder.toString();
         }
 
-        private String extractBindingValue(HttpServletRequest request, List<String> bindingHeaders) {
-            if (bindingHeaders.isEmpty()) {
-                return null;
-            }
-            StringBuilder combined = new StringBuilder();
-            for (String header : bindingHeaders) {
-                String value = trimOrNull(request.getHeader(header));
-                if (!hasText(value)) {
-                    return null;
-                }
-                combined.append(value);
-            }
-            return combined.toString();
-        }
-
-        private boolean isBindingValid(String bindingValue, Claims claims) {
-            String expected = claims.get("pay", String.class);
-            if (!hasText(expected)) {
-                return false;
-            }
-            String computed = hashBase64(bindingValue);
-            return MessageDigest.isEqual(
-                    expected.trim().getBytes(StandardCharsets.UTF_8),
-                    computed.getBytes(StandardCharsets.UTF_8));
-        }
-
-        private String hashBase64(String value) {
-            try {
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-                return Base64.getEncoder().encodeToString(hash);
-            } catch (NoSuchAlgorithmException e) {
-                throw new IllegalStateException("SHA-256 not available", e);
-            }
-        }
-
         private Authentication disabledAuthentication() {
             return new UsernamePasswordAuthenticationToken(
                     "approov-disabled", null, Collections.emptyList());
         }
 
-        private void validateExpiration(Claims claims) {
-            Date expiration = claims.getExpiration();
-            if (expiration == null) {
-                throw new JwtException("Approov token missing expiration.");
+        private static String trimOrNull(String value) {
+            return value == null ? null : value.trim();
+        }
+
+        static final class ApproovTokenValidator {
+
+            ValidationResult validate(String path, Function<String, String> headerProvider) {
+                List<String> bindingHeaders = bindingHeadersForPath(path);
+                List<String> requiredHeaders = requiredHeadersForRequest(bindingHeaders);
+
+                String rawToken = trimOrNull(headerProvider.apply(APPROOV_HEADER));
+                if (!hasText(rawToken)) {
+                    return ValidationResult.failure(requiredHeaders, "missing_approov_token", null, null);
+                }
+
+                Claims claims;
+                try {
+                    claims = verifyApproovToken(rawToken);
+                } catch (JwtException | IllegalArgumentException e) {
+                    return ValidationResult.failure(
+                            requiredHeaders,
+                            "token_verification_failed",
+                            e.getMessage(),
+                            e.getClass().getSimpleName());
+                }
+
+                if (isTokenBindingEnabled() && !bindingHeaders.isEmpty()) {
+                    String bindingValue = extractBindingValue(headerProvider, bindingHeaders);
+                    if (!hasText(bindingValue)) {
+                        return ValidationResult.failure(requiredHeaders, "missing_binding_header", null, null);
+                    }
+                    if (!isBindingValid(bindingValue, claims)) {
+                        return ValidationResult.failure(requiredHeaders, "binding_mismatch", null, null);
+                    }
+                }
+                return ValidationResult.success(requiredHeaders);
             }
-            if (expiration.before(new Date())) {
-                throw new JwtException("Approov token expired.");
+
+            List<String> requiredHeadersForPath(String path) {
+                return requiredHeadersForRequest(bindingHeadersForPath(path));
+            }
+
+            private Claims verifyApproovToken(String token) {
+                Jws<Claims> claims = Jwts.parser()
+                        .verifyWith(Keys.hmacShaKeyFor(approovSecret()))
+                        .build()
+                        .parseSignedClaims(token);
+                validateExpiration(claims.getPayload());
+                return claims.getPayload();
+            }
+
+            private List<String> bindingHeadersForPath(String path) {
+                if ("/token-binding".equals(path)) {
+                    return List.of(AUTH_HEADER);
+                }
+                if ("/token-double-binding".equals(path)) {
+                    return List.of(AUTH_HEADER, SESSION_ID_HEADER);
+                }
+                return Collections.emptyList();
+            }
+
+            private List<String> requiredHeadersForRequest(List<String> bindingHeaders) {
+                if (!isTokenBindingEnabled() || bindingHeaders.isEmpty()) {
+                    return List.of(APPROOV_HEADER);
+                }
+                List<String> headers = new ArrayList<>(1 + bindingHeaders.size());
+                headers.add(APPROOV_HEADER);
+                headers.addAll(bindingHeaders);
+                return headers;
+            }
+
+            private String extractBindingValue(Function<String, String> headerProvider, List<String> bindingHeaders) {
+                if (bindingHeaders.isEmpty()) {
+                    return null;
+                }
+                StringBuilder combined = new StringBuilder();
+                for (String header : bindingHeaders) {
+                    String value = trimOrNull(headerProvider.apply(header));
+                    if (!hasText(value)) {
+                        return null;
+                    }
+                    combined.append(value);
+                }
+                return combined.toString();
+            }
+
+            private boolean isBindingValid(String bindingValue, Claims claims) {
+                String expected = claims.get("pay", String.class);
+                if (!hasText(expected)) {
+                    return false;
+                }
+                String computed = hashBase64(bindingValue);
+                return MessageDigest.isEqual(
+                        expected.trim().getBytes(StandardCharsets.UTF_8),
+                        computed.getBytes(StandardCharsets.UTF_8));
+            }
+
+            private String hashBase64(String value) {
+                try {
+                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                    byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+                    return Base64.getEncoder().encodeToString(hash);
+                } catch (NoSuchAlgorithmException e) {
+                    throw new IllegalStateException("SHA-256 not available", e);
+                }
+            }
+
+            private void validateExpiration(Claims claims) {
+                Date expiration = claims.getExpiration();
+                if (expiration == null) {
+                    throw new JwtException("Approov token missing expiration.");
+                }
+                if (expiration.before(new Date())) {
+                    throw new JwtException("Approov token expired.");
+                }
             }
         }
 
-        private String trimOrNull(String value) {
-            return value == null ? null : value.trim();
+        static final class ValidationResult {
+
+            private final List<String> requiredHeaders;
+            private final ValidationError error;
+
+            private ValidationResult(List<String> requiredHeaders, ValidationError error) {
+                this.requiredHeaders = List.copyOf(requiredHeaders);
+                this.error = error;
+            }
+
+            static ValidationResult success(List<String> requiredHeaders) {
+                return new ValidationResult(requiredHeaders, null);
+            }
+
+            static ValidationResult failure(
+                    List<String> requiredHeaders,
+                    String reason,
+                    String message,
+                    String exception) {
+                return new ValidationResult(requiredHeaders, new ValidationError(reason, message, exception));
+            }
+
+            boolean isSuccessful() {
+                return error == null;
+            }
+
+            List<String> requiredHeaders() {
+                return requiredHeaders;
+            }
+
+            ValidationError error() {
+                return error;
+            }
+        }
+
+        static final class ValidationError {
+
+            private final String reason;
+            private final String message;
+            private final String exception;
+
+            ValidationError(String reason, String message, String exception) {
+                this.reason = reason;
+                this.message = message;
+                this.exception = exception;
+            }
+
+            String reason() {
+                return reason;
+            }
+
+            String message() {
+                return message;
+            }
+
+            String exception() {
+                return exception;
+            }
         }
     }
 }
