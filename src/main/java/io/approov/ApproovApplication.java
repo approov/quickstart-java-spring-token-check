@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -221,7 +220,7 @@ public class ApproovApplication {
                             .authenticated())
                     .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authEntryPoint))
                     .addFilterBefore(
-                            new ApproovTokenVerifier(authEntryPoint),
+                            new ApproovAuthenticationFilter(authEntryPoint),
                             AuthorizationFilter.class);
             return http.build();
         }
@@ -231,7 +230,7 @@ public class ApproovApplication {
      * Stateless filter that validates the Approov token (and bindings when enabled)
      * before protected endpoints.
      */
-    static class ApproovTokenVerifier extends OncePerRequestFilter {
+    static class ApproovAuthenticationFilter extends OncePerRequestFilter {
 
         private static final Set<String> APPROOV_PROTECTED_PATHS = Collections.unmodifiableSet(
                 new java.util.HashSet<>(Arrays.asList(
@@ -240,7 +239,7 @@ public class ApproovApplication {
         private final AuthenticationEntryPoint entryPoint;
         private final ApproovTokenValidator validator = new ApproovTokenValidator();
 
-        ApproovTokenVerifier(AuthenticationEntryPoint entryPoint) {
+        ApproovAuthenticationFilter(AuthenticationEntryPoint entryPoint) {
             this.entryPoint = entryPoint;
         }
 
@@ -265,7 +264,7 @@ public class ApproovApplication {
                 return;
             }
 
-            ValidationResult validation = validator.validate(path, request::getHeader);
+            ValidationResult validation = validator.validate(request);
             if (!validation.isSuccessful()) {
                 logValidationFailure(request, validation);
                 SecurityContextHolder.clearContext();
@@ -396,11 +395,12 @@ public class ApproovApplication {
 
         static final class ApproovTokenValidator {
 
-            ValidationResult validate(String path, Function<String, String> headerProvider) {
+            ValidationResult validate(HttpServletRequest request) {
+                String path = request.getRequestURI();
                 List<String> bindingHeaders = bindingHeadersForPath(path);
                 List<String> requiredHeaders = requiredHeadersForRequest(bindingHeaders);
 
-                String rawToken = trimOrNull(headerProvider.apply(APPROOV_HEADER));
+                String rawToken = trimOrNull(request.getHeader(APPROOV_HEADER));
                 if (!hasText(rawToken)) {
                     return ValidationResult.failure(requiredHeaders, "missing_approov_token", null, null);
                 }
@@ -417,7 +417,7 @@ public class ApproovApplication {
                 }
 
                 if (isTokenBindingEnabled() && !bindingHeaders.isEmpty()) {
-                    String bindingValue = extractBindingValue(headerProvider, bindingHeaders);
+                    String bindingValue = extractBindingValue(request, bindingHeaders);
                     if (!hasText(bindingValue)) {
                         return ValidationResult.failure(requiredHeaders, "missing_binding_header", null, null);
                     }
@@ -461,13 +461,13 @@ public class ApproovApplication {
                 return headers;
             }
 
-            private String extractBindingValue(Function<String, String> headerProvider, List<String> bindingHeaders) {
+            private String extractBindingValue(HttpServletRequest request, List<String> bindingHeaders) {
                 if (bindingHeaders.isEmpty()) {
                     return null;
                 }
                 StringBuilder combined = new StringBuilder();
                 for (String header : bindingHeaders) {
-                    String value = trimOrNull(headerProvider.apply(header));
+                    String value = trimOrNull(request.getHeader(header));
                     if (!hasText(value)) {
                         return null;
                     }
