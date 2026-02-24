@@ -1,0 +1,35 @@
+name: Smoke Docker Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/spring-quickstart
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Make scripts executable
+        run: chmod +x *.sh scripts/*.sh gradlew || true
+
+      - name: Check Docker
+        run: docker --version
+
+      - name: Start server
+        env:
+          FOLLOW_LOGS: "false"
+        run: bash run-server.sh
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f approov-quickstart-java-spring-app || true
