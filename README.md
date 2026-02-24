@@ -7,7 +7,7 @@ This project provides a server-side example of Approov token verification for a 
  - `/token-binding` - requires a valid Approov token which is bound to a header value.
  - `/token-double-binding` - requires a valid Approov token which is bound to two header values.    
 
-In this example, Approov token verification is implemented in `ApproovApplication.java`. The `ApproovAuthenticationFilter` filter is registered in Spring Security by the [SecurityConfig.securityFilterChain](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L206-L225). The responsibilities break down as follows:
+In this example, Approov token verification is implemented in `ApproovApplication.java`. The responsibilities break down as follows:
 
 1. **JWT Approov Token validation (signature + expiry)** is handled by [verifyApproovToken](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L435-L442) and [validateExpiration](https://github.com/approov/quickstart-java-spring-token-check/blob/refactor/spring-quickstart/src/main/java/io/approov/ApproovApplication.java#L500-L507). It verifies the HS256 signature and rejects tokens with invalid signatures or expired `exp`. Missing tokens are rejected earlier during request-header validation.
 
