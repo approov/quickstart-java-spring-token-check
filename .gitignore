@@ -2,6 +2,9 @@ HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
+.DS_Store
+src/.DS_Store
+src/main/.DS_Store
 
 ### STS ###
 .apt_generated
@@ -31,3 +34,9 @@ nbdist/
 
 .local/
 .env
+.config/
+
+# macOS
+.DS_Store
+**/.DS_Store
+bin/

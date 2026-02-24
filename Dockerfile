@@ -1,0 +1,13 @@
+# syntax=docker/dockerfile:1
+# as the entrypoint used both locally and when deployed via Docker.
+FROM eclipse-temurin:21-jdk
+
+ENV APP_HOME=/workspace \
+    RUN_MODE=container
+
+WORKDIR /app
+
+COPY . .
+
+# Provide APP_START_CMD via --env-file.
+CMD ["bash", "scripts/build.sh"]
