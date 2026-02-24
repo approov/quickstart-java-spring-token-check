@@ -25,6 +25,11 @@ jobs:
       - name: Check Docker
         run: docker --version
 
+      - name: Create .env file
+        run: |
+          cp .env.example .env
+          echo "APPROOV_BASE64URL_SECRET=dummy-secret-for-smoke-test" >> .env
+
       - name: Start server
         env:
           FOLLOW_LOGS: "false"
